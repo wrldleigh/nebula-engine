@@ -3,6 +3,7 @@ import { parseInput } from "./parser";
 import { processTelegramWebhook, TelegramBot } from "./telegram";
 import { sendDailyNotification } from "./notify";
 import { EmailInput, processEmailMessages } from "./email-input";
+import { isDuplicate, cleanupExpiredItems, getStats } from "./validation";
 import { Env } from "./types";
 
 export default {
@@ -30,6 +31,12 @@ export default {
     // Daily reminders: 8am/7pm UTC (0 7,18 * * *)
     if ((hours === 7 || hours === 18) && minutes < 5) {
       await sendDailyNotification(db, env);
+
+      // Run cleanup at 8am: remove expired items >7 days old
+      if (hours === 7) {
+        const cleaned = await cleanupExpiredItems(db, 7);
+        console.log(`Cleaned up ${cleaned} expired items`);
+      }
     }
 
     // Email polling: every 15 minutes (*/15 * * * *)
@@ -57,7 +64,10 @@ async function pollEmailAndStore(db: Database, env: Env): Promise<void> {
     const messages = await emailInput.pollNewMessages(lastTimestamp);
 
     await processEmailMessages(messages, async (item) => {
-      await db.addItem(item.name, item.expiryDate, "email");
+      const duplicate = await isDuplicate(db, item.name, item.expiryDate);
+      if (!duplicate) {
+        await db.addItem(item.name, item.expiryDate, "email");
+      }
     });
 
     await db.setMeta("last_email_poll", new Date().toISOString());
@@ -106,8 +116,32 @@ async function handleTelegramWebhook(
         } else {
           await bot.sendMessage(`Usage: /remove <item name>`);
         }
+      } else if (command === "/stats") {
+        const stats = await getStats(db);
+        const msg =
+          `📊 *Your Stats*\n` +
+          `Total items: ${stats.total}\n` +
+          `Expiring today: ${stats.expiredToday}\n` +
+          `This week: ${stats.expiredThisWeek}\n` +
+          `Upcoming: ${stats.upcoming}`;
+        await bot.sendMessage(msg);
+      } else if (command === "/cleanup") {
+        const cleaned = await cleanupExpiredItems(db, 7);
+        await bot.sendMessage(
+          `🧹 Cleaned up ${cleaned} items (>7 days expired)`
+        );
+      } else if (command === "/help") {
+        const help =
+          `*Commands:*\n` +
+          `Add item: \`chicken 2026-07-03\` or \`milk 3d\`\n` +
+          `/list — Show all items\n` +
+          `/remove <name> — Delete item\n` +
+          `/stats — Show statistics\n` +
+          `/cleanup — Remove expired items >7 days old\n` +
+          `/help — Show this message`;
+        await bot.sendMessage(help);
       } else {
-        await bot.sendMessage(`Unknown command: ${command}`);
+        await bot.sendMessage(`Unknown command: ${command}. Try /help`);
       }
 
       return new Response("OK", { status: 200 });
@@ -115,13 +149,20 @@ async function handleTelegramWebhook(
 
     const parsed = parseInput(text);
     if (parsed) {
-      await db.addItem(parsed.name, parsed.expiryDate, "telegram");
-      await bot.sendMessage(
-        `✅ Added *${parsed.name}* (expires ${parsed.expiryDate})`
-      );
+      const duplicate = await isDuplicate(db, parsed.name, parsed.expiryDate);
+      if (duplicate) {
+        await bot.sendMessage(
+          `⚠️ *${parsed.name}* with expiry ${parsed.expiryDate} already tracked`
+        );
+      } else {
+        await db.addItem(parsed.name, parsed.expiryDate, "telegram");
+        await bot.sendMessage(
+          `✅ Added *${parsed.name}* (expires ${parsed.expiryDate})`
+        );
+      }
     } else {
       await bot.sendMessage(
-        `❌ Could not parse. Use format: *item name YYYY-MM-DD* or *item name 3d*`
+        `❌ Could not parse. Use format: *item name YYYY-MM-DD* or *item name 3d*, or try /help`
       );
     }
 

@@ -26,8 +26,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const items = await listItems();
+    const isDuplicate = items.some(
+      (item) =>
+        item.name.toLowerCase() === name.toLowerCase() &&
+        item.expiry_date === expiryDate
+    );
+
+    if (isDuplicate) {
+      return NextResponse.json({ success: true, duplicate: true });
+    }
+
     await addItem(name, expiryDate, "gui");
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, duplicate: false });
   } catch (error) {
     console.error("Error adding item:", error);
     return NextResponse.json(

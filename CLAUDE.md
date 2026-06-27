@@ -44,10 +44,13 @@ A food expiry tracker that prevents waste. Add items + use-by dates via Telegram
 - Dashboard alerts for items expiring today and expired items
 - Full CRUD API routes: POST/GET/PUT/DELETE /api/items
 
-### Phase 4: Polish (TODO)
-- Duplicate detection (same item added twice)
-- Auto-cleanup of expired items (>1 week old)
-- Telegram commands fully tested
+### Phase 4: Polish ✅
+- **Duplicate detection**: isDuplicate() checks name + expiryDate before adding (across Telegram, email, GUI)
+- **Auto-cleanup**: Daily 8am cron removes items >7 days expired (cleanupExpiredItems)
+- **New Telegram commands**: /stats (show counts), /cleanup (manual cleanup), /help (command list)
+- **Validation module**: src/validation.ts with isDuplicate, cleanupExpiredItems, getStats
+- **GUI duplicate handling**: Bulk add shows count of skipped duplicates
+- **Email duplicate check**: pollEmailAndStore filters duplicates
 
 ## Key Files
 

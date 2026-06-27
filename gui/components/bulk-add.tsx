@@ -22,6 +22,8 @@ export function BulkAdd({ onAdd }: BulkAddProps) {
       .filter((line) => line.length > 0);
 
     let addedCount = 0;
+    let skippedCount = 0;
+
     for (const line of lines) {
       const parts = line.split(/\s+/);
       if (parts.length >= 2) {
@@ -36,7 +38,12 @@ export function BulkAdd({ onAdd }: BulkAddProps) {
           });
 
           if (response.ok) {
-            addedCount++;
+            const data = (await response.json()) as any;
+            if (data.duplicate) {
+              skippedCount++;
+            } else {
+              addedCount++;
+            }
           }
         } catch (error) {
           console.error("Error adding item:", error);
@@ -44,7 +51,11 @@ export function BulkAdd({ onAdd }: BulkAddProps) {
       }
     }
 
-    setMessage(`Added ${addedCount} items`);
+    let msg = `Added ${addedCount} items`;
+    if (skippedCount > 0) {
+      msg += ` (${skippedCount} duplicates skipped)`;
+    }
+    setMessage(msg);
     setText("");
     setIsLoading(false);
     onAdd();
