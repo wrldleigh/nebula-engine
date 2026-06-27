@@ -2,6 +2,7 @@ import { Database } from "./db";
 import { parseInput } from "./parser";
 import { processTelegramWebhook, TelegramBot } from "./telegram";
 import { sendDailyNotification } from "./notify";
+import { EmailInput, processEmailMessages } from "./email-input";
 import { Env } from "./types";
 
 export default {
@@ -26,11 +27,44 @@ export default {
     const hours = now.getUTCHours();
     const minutes = now.getUTCMinutes();
 
+    // Daily reminders: 8am/7pm UTC (0 7,18 * * *)
     if ((hours === 7 || hours === 18) && minutes < 5) {
       await sendDailyNotification(db, env);
     }
+
+    // Email polling: every 15 minutes (*/15 * * * *)
+    if (minutes % 15 === 0 && env.GMAIL_CLIENT_ID) {
+      await pollEmailAndStore(db, env);
+    }
   },
 };
+
+async function pollEmailAndStore(db: Database, env: Env): Promise<void> {
+  if (!env.GMAIL_CLIENT_ID || !env.GMAIL_CLIENT_SECRET || !env.GMAIL_REFRESH_TOKEN) {
+    return; // Email not configured
+  }
+
+  try {
+    const lastPoll = await db.getMeta("last_email_poll");
+    const lastTimestamp = lastPoll || new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
+    const emailInput = new EmailInput({
+      clientId: env.GMAIL_CLIENT_ID,
+      clientSecret: env.GMAIL_CLIENT_SECRET,
+      refreshToken: env.GMAIL_REFRESH_TOKEN,
+    });
+
+    const messages = await emailInput.pollNewMessages(lastTimestamp);
+
+    await processEmailMessages(messages, async (item) => {
+      await db.addItem(item.name, item.expiryDate, "email");
+    });
+
+    await db.setMeta("last_email_poll", new Date().toISOString());
+  } catch (error) {
+    console.error("Email polling error:", error);
+  }
+}
 
 async function handleTelegramWebhook(
   request: Request,

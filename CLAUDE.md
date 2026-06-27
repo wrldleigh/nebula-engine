@@ -20,27 +20,34 @@ A food expiry tracker that prevents waste. Add items + use-by dates via Telegram
 
 ## Phase Status
 
-### Phase 1: Complete
+### Phase 1: Complete ✅
 - Telegram webhook integration with instant confirmation replies
 - Database schema: `items` (name, expiry_date, source, added_at) + `meta` table
 - Parser supports ISO dates, relative days (3d), natural dates (july 3)
 - Daily reminders at 8am/7pm (UTC) with color-coded groups (🔴 today, 🟡 tomorrow, 🟢 later)
 - Commands: `/list` shows all items, `/remove <name>` deletes
 - Full test suite: 6 passing tests covering all date formats
+- Cloudflare Workers deployment ready
 
-### Phase 2: Email channels (TODO)
-- Gmail API polling (every 15 min)
-- Gmail SMTP for email reminders
+### Phase 2: Email channels ✅
+- Gmail API polling every 15 minutes for new items via email
+- Gmail API for sending email reminders (with OAuth2 refresh tokens)
+- Integrated into CF Worker scheduled tasks
+- Graceful fallback: works with Telegram-only if email not configured
 
-### Phase 3: Local GUI (TODO)
-- Next.js dashboard on localhost:3000
-- Bulk add/edit/delete
-- Settings for reminder times, timezone, toggle notifications
-- History view of expired items
+### Phase 3: Local Management GUI ✅
+- Next.js 16 dashboard on localhost:3000
+- Item table with inline edit/delete
+- Bulk add form (paste multiple items at once)
+- Settings page: reminder times, timezone, toggle channels
+- Color-coded expiry indicators (red=today, yellow=tomorrow, green=later)
+- Dashboard alerts for items expiring today and expired items
+- Full CRUD API routes: POST/GET/PUT/DELETE /api/items
 
 ### Phase 4: Polish (TODO)
-- Duplicate detection
-- Auto-cleanup of expired items
+- Duplicate detection (same item added twice)
+- Auto-cleanup of expired items (>1 week old)
+- Telegram commands fully tested
 
 ## Key Files
 
