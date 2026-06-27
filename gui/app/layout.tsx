@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Navigation } from "@/components/navigation";
 
 export const metadata: Metadata = {
   title: "Nebula Engine",
@@ -12,15 +13,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <nav style={{ padding: "1rem", backgroundColor: "#f0f0f0" }}>
-          <h1 style={{ margin: 0, marginBottom: "0.5rem" }}>🍔 Nebula Engine</h1>
-          <div style={{ display: "flex", gap: "1rem" }}>
-            <a href="/">Dashboard</a>
-            <a href="/settings">Settings</a>
-          </div>
-        </nav>
-        <main style={{ padding: "1rem" }}>{children}</main>
+      <body
+        style={{
+          margin: 0,
+          padding: 0,
+          backgroundImage: "url('/background.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed",
+          minHeight: "100vh",
+          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        }}
+      >
+        <Navigation />
+        <main style={{ padding: "1.5rem", color: "#ffffff" }}>{children}</main>
       </body>
     </html>
   );

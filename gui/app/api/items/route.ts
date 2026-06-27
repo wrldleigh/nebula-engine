@@ -6,9 +6,10 @@ export async function GET() {
     const items = await listItems();
     return NextResponse.json(items);
   } catch (error) {
-    console.error("Error fetching items:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("Error fetching items:", errorMsg);
     return NextResponse.json(
-      { error: "Failed to fetch items" },
+      { error: `Failed to fetch items: ${errorMsg}` },
       { status: 500 }
     );
   }
@@ -40,9 +41,10 @@ export async function POST(request: NextRequest) {
     await addItem(name, expiryDate, "gui");
     return NextResponse.json({ success: true, duplicate: false });
   } catch (error) {
-    console.error("Error adding item:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("Error adding item:", errorMsg);
     return NextResponse.json(
-      { error: "Failed to add item" },
+      { error: `Failed to add item: ${errorMsg}` },
       { status: 500 }
     );
   }

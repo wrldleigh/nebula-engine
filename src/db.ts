@@ -32,7 +32,7 @@ export class Database {
   async addItem(
     name: string,
     expiryDate: string,
-    source: "telegram" | "email"
+    source: "telegram" = "telegram"
   ): Promise<void> {
     await this.client.execute({
       sql: "INSERT INTO items (name, expiry_date, source) VALUES (?, ?, ?)",

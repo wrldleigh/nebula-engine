@@ -26,8 +26,21 @@ export function parseInput(input: string): ParsedItem | null {
 }
 
 function parseDate(dateStr: string): string | null {
+  // ISO format YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
     return dateStr;
+  }
+
+  // UK format DD-MM-YYYY
+  if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
+    const parts = dateStr.split("-");
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const year = parseInt(parts[2], 10);
+    if (day < 1 || day > 31 || month < 1 || month > 12) return null;
+    const monthStr = String(month).padStart(2, "0");
+    const dayStr = String(day).padStart(2, "0");
+    return `${year}-${monthStr}-${dayStr}`;
   }
 
   const d = parseNaturalDate(dateStr);
@@ -91,4 +104,9 @@ function formatLocalDate(d: Date): string {
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+export function formatDateUK(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-");
+  return `${day}-${month}-${year}`;
 }

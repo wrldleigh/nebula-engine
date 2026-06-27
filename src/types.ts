@@ -21,10 +21,4 @@ export interface Env {
   TURSO_AUTH_TOKEN: string;
   TELEGRAM_BOT_TOKEN: string;
   TELEGRAM_CHAT_ID: string;
-  // Phase 2: Email
-  GMAIL_CLIENT_ID?: string;
-  GMAIL_CLIENT_SECRET?: string;
-  GMAIL_REFRESH_TOKEN?: string;
-  GMAIL_FROM_EMAIL?: string;
-  GMAIL_TO_EMAIL?: string;
 }

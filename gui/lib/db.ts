@@ -69,17 +69,25 @@ export async function updateItem(
   expiryDate: string
 ): Promise<void> {
   const client = getClient();
+  const numId = Number(id);
+  if (isNaN(numId)) {
+    throw new Error(`Invalid id: ${id}`);
+  }
   await client.execute({
     sql: "UPDATE items SET name = ?, expiry_date = ? WHERE id = ?",
-    args: [name, expiryDate, id],
+    args: [name, expiryDate, numId],
   });
 }
 
 export async function deleteItem(id: number): Promise<void> {
   const client = getClient();
+  const numId = Number(id);
+  if (isNaN(numId)) {
+    throw new Error(`Invalid id: ${id}`);
+  }
   await client.execute({
     sql: "DELETE FROM items WHERE id = ?",
-    args: [id],
+    args: [numId],
   });
 }
 

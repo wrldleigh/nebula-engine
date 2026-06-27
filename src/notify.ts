@@ -1,6 +1,6 @@
 import { Database } from "./db";
 import { TelegramBot } from "./telegram";
-import { EmailOutput } from "./email-output";
+import { formatDateUK } from "./parser";
 import { Env } from "./types";
 
 export function formatExpiryMessage(expiringGroups: Map<string, string[]>): string {
@@ -42,30 +42,5 @@ export async function sendDailyNotification(db: Database, env: Env): Promise<voi
   const bot = new TelegramBot(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID);
   const expiringGroups = await db.getExpiringItems(3);
   const message = formatExpiryMessage(expiringGroups);
-
-  // Send via Telegram
   await bot.sendMessage(message);
-
-  // Send via email if configured
-  if (env.GMAIL_CLIENT_ID && env.GMAIL_TO_EMAIL) {
-    try {
-      const emailOutput = new EmailOutput(
-        {
-          clientId: env.GMAIL_CLIENT_ID,
-          clientSecret: env.GMAIL_CLIENT_SECRET || "",
-          refreshToken: env.GMAIL_REFRESH_TOKEN || "",
-        },
-        env.GMAIL_FROM_EMAIL || env.GMAIL_TO_EMAIL
-      );
-      // Format for email (remove Markdown)
-      const emailMessage = message
-        .replace(/\*/g, "")
-        .replace(/🔴/g, "[EXPIRING TODAY]")
-        .replace(/🟡/g, "[Tomorrow]")
-        .replace(/🟢/g, "[Later]");
-      await emailOutput.sendEmail(env.GMAIL_TO_EMAIL, "🍔 Food Expiry Reminder", emailMessage);
-    } catch (error) {
-      console.error("Failed to send email reminder:", error);
-    }
-  }
 }

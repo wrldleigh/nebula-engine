@@ -6,9 +6,10 @@ export async function GET() {
     const settings = await getAllSettings();
     return NextResponse.json(settings);
   } catch (error) {
-    console.error("Error fetching settings:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("Error fetching settings:", errorMsg);
     return NextResponse.json(
-      { error: "Failed to fetch settings" },
+      { error: `Failed to fetch settings: ${errorMsg}` },
       { status: 500 }
     );
   }
@@ -24,9 +25,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error saving settings:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("Error saving settings:", errorMsg);
     return NextResponse.json(
-      { error: "Failed to save settings" },
+      { error: `Failed to save settings: ${errorMsg}` },
       { status: 500 }
     );
   }

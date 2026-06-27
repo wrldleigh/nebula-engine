@@ -35,19 +35,21 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h2>Food Inventory</h2>
+      <h2 style={{ color: "#ffed4e", marginBottom: "1.5rem" }}>Food Inventory</h2>
 
       {expiringToday.length > 0 && (
         <div
           style={{
             padding: "1rem",
-            backgroundColor: "#ffe0e0",
+            backgroundColor: "rgba(255, 100, 100, 0.15)",
+            border: "2px solid #ff6464",
             marginBottom: "1rem",
-            borderRadius: "4px",
+            borderRadius: "8px",
+            color: "#ffb3b3",
           }}
         >
           <strong>🔴 {expiringToday.length} items expiring TODAY!</strong>
-          <ul>
+          <ul style={{ margin: "0.5rem 0 0 1.5rem", color: "#ffffff" }}>
             {expiringToday.map((item) => (
               <li key={item.id}>{item.name}</li>
             ))}
@@ -59,10 +61,11 @@ export default function Dashboard() {
         <div
           style={{
             padding: "1rem",
-            backgroundColor: "#ff9999",
+            backgroundColor: "rgba(255, 50, 50, 0.2)",
+            border: "2px solid #ff3232",
             marginBottom: "1rem",
-            borderRadius: "4px",
-            color: "white",
+            borderRadius: "8px",
+            color: "#ff9999",
           }}
         >
           <strong>⚠️ {expiredItems.length} items have expired</strong>

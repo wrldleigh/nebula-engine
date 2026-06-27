@@ -5,10 +5,9 @@ import { useEffect, useState } from "react";
 export default function Settings() {
   const [reminderTimes, setReminderTimes] = useState("07:00,18:00");
   const [timezone, setTimezone] = useState("Europe/London");
-  const [telegramEnabled, setTelegramEnabled] = useState(true);
-  const [emailEnabled, setEmailEnabled] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [timeError, setTimeError] = useState("");
 
   useEffect(() => {
     loadSettings();
@@ -25,22 +24,27 @@ export default function Settings() {
       if (settings.timezone) {
         setTimezone(settings.timezone);
       }
-      if (settings.telegram_enabled !== undefined) {
-        setTelegramEnabled(settings.telegram_enabled === "true");
-      }
-      if (settings.email_enabled !== undefined) {
-        setEmailEnabled(settings.email_enabled === "true");
-      }
     } catch (error) {
       console.error("Error loading settings:", error);
     }
   };
 
+  const validateReminderTimes = (times: string): boolean => {
+    const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+    return times.split(",").every(time => timeRegex.test(time.trim()));
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
+    setTimeError("");
     setMessage("");
 
+    if (!validateReminderTimes(reminderTimes)) {
+      setTimeError("Invalid time format. Use HH:MM (24-hour), comma-separated (e.g., 07:00,18:00)");
+      return;
+    }
+
+    setIsSaving(true);
     try {
       const response = await fetch("/api/settings", {
         method: "POST",
@@ -48,19 +52,18 @@ export default function Settings() {
         body: JSON.stringify({
           reminder_times: reminderTimes,
           timezone,
-          telegram_enabled: String(telegramEnabled),
-          email_enabled: String(emailEnabled),
         }),
       });
 
       if (response.ok) {
-        setMessage("Settings saved!");
+        setMessage("✅ Settings saved!");
+        setTimeout(() => setMessage(""), 3000);
       } else {
-        setMessage("Failed to save settings");
+        setMessage("❌ Failed to save settings");
       }
     } catch (error) {
       console.error("Error saving settings:", error);
-      setMessage("Error saving settings");
+      setMessage("❌ Error saving settings");
     } finally {
       setIsSaving(false);
     }
@@ -68,31 +71,55 @@ export default function Settings() {
 
   return (
     <div>
-      <h2>Settings</h2>
+      <h2 style={{ color: "#ffed4e" }}>Settings</h2>
 
       <form onSubmit={handleSave} style={{ maxWidth: "600px" }}>
         <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "block", marginBottom: "0.5rem" }}>
+          <label style={{ display: "block", marginBottom: "0.5rem", color: "#ffed4e" }}>
             <strong>Reminder Times</strong>
             <br />
-            <small>Comma-separated 24-hour format (e.g., 07:00,18:00)</small>
+            <small style={{ color: "#00d9ff" }}>Comma-separated 24-hour format (e.g., 07:00,18:00)</small>
           </label>
           <input
             type="text"
             value={reminderTimes}
-            onChange={(e) => setReminderTimes(e.target.value)}
-            style={{ width: "100%", padding: "0.5rem" }}
+            onChange={(e) => {
+              setReminderTimes(e.target.value);
+              setTimeError("");
+            }}
+            style={{
+              width: "100%",
+              padding: "0.5rem",
+              backgroundColor: "rgba(40, 20, 60, 0.8)",
+              color: "#ffffff",
+              borderColor: timeError ? "#ff6464" : "#00d9ff",
+              borderWidth: "2px",
+              borderStyle: "solid",
+              borderRadius: "4px",
+            }}
           />
+          {timeError && (
+            <small style={{ color: "red", display: "block", marginTop: "0.25rem" }}>
+              {timeError}
+            </small>
+          )}
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "block", marginBottom: "0.5rem" }}>
+          <label style={{ display: "block", marginBottom: "0.5rem", color: "#ffed4e" }}>
             <strong>Timezone</strong>
           </label>
           <select
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
-            style={{ width: "100%", padding: "0.5rem" }}
+            style={{
+              width: "100%",
+              padding: "0.5rem",
+              backgroundColor: "rgba(40, 20, 60, 0.8)",
+              color: "#ffffff",
+              border: "2px solid #00d9ff",
+              borderRadius: "4px",
+            }}
           >
             <option value="Europe/London">Europe/London (GMT/BST)</option>
             <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
@@ -104,27 +131,6 @@ export default function Settings() {
           </select>
         </div>
 
-        <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "flex", gap: "0.5rem" }}>
-            <input
-              type="checkbox"
-              checked={telegramEnabled}
-              onChange={(e) => setTelegramEnabled(e.target.checked)}
-            />
-            <span>Enable Telegram notifications</span>
-          </label>
-        </div>
-
-        <div style={{ marginBottom: "1.5rem" }}>
-          <label style={{ display: "flex", gap: "0.5rem" }}>
-            <input
-              type="checkbox"
-              checked={emailEnabled}
-              onChange={(e) => setEmailEnabled(e.target.checked)}
-            />
-            <span>Enable Email notifications</span>
-          </label>
-        </div>
 
         <button
           type="submit"
@@ -132,32 +138,46 @@ export default function Settings() {
           style={{
             padding: "0.5rem 1rem",
             cursor: isSaving ? "wait" : "pointer",
-            backgroundColor: "#4CAF50",
-            color: "white",
+            backgroundColor: "#ffd700",
+            color: "#000",
             border: "none",
             borderRadius: "4px",
+            fontWeight: "bold",
+            transition: "background-color 0.2s",
+            opacity: isSaving ? 0.6 : 1,
           }}
+          onMouseOver={(e) => !isSaving && (e.currentTarget.style.backgroundColor = "#ffed4e")}
+          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#ffd700")}
         >
           {isSaving ? "Saving..." : "Save Settings"}
         </button>
 
         {message && (
-          <p style={{ marginTop: "1rem", color: message.includes("saved") ? "green" : "red" }}>
+          <div
+            style={{
+              marginTop: "1rem",
+              padding: "0.5rem",
+              borderRadius: "4px",
+              backgroundColor: message.includes("saved") ? "rgba(0, 217, 100, 0.15)" : "rgba(255, 50, 50, 0.2)",
+              color: message.includes("saved") ? "#00ff7f" : "#ff9999",
+              border: `1px solid ${message.includes("saved") ? "#00d966" : "#ff6464"}`,
+            }}
+          >
             {message}
-          </p>
+          </div>
         )}
       </form>
 
-      <hr style={{ margin: "2rem 0" }} />
+      <hr style={{ margin: "2rem 0", borderColor: "rgba(0, 217, 255, 0.2)" }} />
 
-      <div style={{ backgroundColor: "#f9f9f9", padding: "1rem", borderRadius: "4px" }}>
-        <h3>About</h3>
-        <p>
-          <strong>Nebula Engine</strong> is a food expiry tracker that prevents waste.
+      <div style={{ backgroundColor: "rgba(255, 215, 0, 0.08)", padding: "1rem", borderRadius: "8px", border: "1px solid #ffd700" }}>
+        <h3 style={{ color: "#ffed4e" }}>About</h3>
+        <p style={{ color: "#ffffff" }}>
+          <strong>Nebula Engine</strong> is a cosmic food expiry tracker that prevents waste.
         </p>
-        <ul>
-          <li>Add items via Telegram, email, or this dashboard</li>
-          <li>Receive daily reminders at configured times</li>
+        <ul style={{ color: "#00d9ff" }}>
+          <li>Add items via Telegram or this dashboard</li>
+          <li>Receive daily Telegram reminders at configured times</li>
           <li>View and manage your inventory here</li>
         </ul>
       </div>
