@@ -32,6 +32,22 @@ describe("parseInput", () => {
     });
   });
 
+  it("parses UK format with slashes", () => {
+    const result = parseInput("mozzarella tortellini 07/08/2026");
+    expect(result).toEqual({
+      name: "mozzarella tortellini",
+      expiryDate: "2026-08-07",
+    });
+  });
+
+  it("parses UK format with hyphens", () => {
+    const result = parseInput("cheese 01-07-2026");
+    expect(result).toEqual({
+      name: "cheese",
+      expiryDate: "2026-07-01",
+    });
+  });
+
   it("rejects invalid formats", () => {
     expect(parseInput("just a phrase")).toBeNull();
     expect(parseInput("")).toBeNull();

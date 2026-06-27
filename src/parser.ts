@@ -31,9 +31,9 @@ function parseDate(dateStr: string): string | null {
     return dateStr;
   }
 
-  // UK format DD-MM-YYYY
-  if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
-    const parts = dateStr.split("-");
+  // UK format DD-MM-YYYY or DD/MM/YYYY
+  if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(dateStr)) {
+    const parts = dateStr.split(/[-/]/);
     const day = parseInt(parts[0], 10);
     const month = parseInt(parts[1], 10);
     const year = parseInt(parts[2], 10);

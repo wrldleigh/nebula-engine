@@ -10,7 +10,7 @@ A food expiry tracker that prevents waste. Add items + use-by dates via Telegram
 - **Email polling** (Phase 2): Gmail API, checked every 15 min by CF cron
 
 **Processing**:
-- Message parser handles: ISO dates (2026-07-03), relative days (3d), natural format (july 3)
+- Message parser handles: ISO dates (2026-07-03), UK format with slashes/hyphens (07/08/2026 or 07-08-2026), relative days (3d), natural format (july 3)
 - Turso database stores items with expiry date
 - CF Worker scheduled jobs run at 8am and 7pm UTC, query DB, format notifications
 
@@ -23,10 +23,10 @@ A food expiry tracker that prevents waste. Add items + use-by dates via Telegram
 ### Phase 1: Complete ✅
 - Telegram webhook integration with instant confirmation replies
 - Database schema: `items` (name, expiry_date, source, added_at) + `meta` table
-- Parser supports ISO dates, relative days (3d), natural dates (july 3)
+- Parser supports ISO dates (2026-07-03), UK format with slashes/hyphens (07/08/2026), relative days (3d), natural dates (july 3)
 - Daily reminders at 8am/7pm (UTC) with color-coded groups (🔴 today, 🟡 tomorrow, 🟢 later)
 - Commands: `/list` shows all items, `/remove <name>` deletes
-- Full test suite: 6 passing tests covering all date formats
+- Full test suite: 8 passing tests covering all date formats
 - Cloudflare Workers deployment ready
 
 ### Phase 2: Email channels ✅
